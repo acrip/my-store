@@ -1,18 +1,35 @@
 const express = require('express');
+const cors = require('cors');
 const routerApi = require('./routes');
+
+const { logErrors, errorHandler, boomErrorHandler } = require('./middlewares/error.handler');
 
 const app = express();
 const port = 3000;
 
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('Hola mi server en express, SOY LA RUTA INICIAL, las otras ya se encuentran en modulos');
-});
+const whiteList = ['http://127.0.0.1:5500', 'https://myapp.co'];
+const options = {
+  origin: (origin, callback) => {
+    if (whiteList.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No tiene permiso para conectarse.'));
+    }
+  }
+}
+
+app.use(cors(options));
+
 
 routerApi(app);
 
+app.use(logErrors);
+app.use(boomErrorHandler);
+app.use(errorHandler);
+
 app.listen(port, () => {
-  console.log('Im listening in port ' + port);
+  console.log('Port ' + port);
 });
 
